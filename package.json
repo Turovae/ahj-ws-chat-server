@@ -1,0 +1,22 @@
+{
+  "name": "ahj-ws-chat-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:Turovae/ahj-ws-chat-server.git",
+  "author": "Turovae <ekaterina.turova@mail.ru>",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint .",
+    "start": "nodemon ./server.js"
+  },
+  "devDependencies": {
+    "eslint": "^7.32.0 || ^8.2.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.2",
+    "nodemon": "^2.0.22"
+  },
+  "dependencies": {
+    "koa": "^2.14.2",
+    "ws": "^8.13.0"
+  }
+}
