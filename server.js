@@ -21,27 +21,30 @@ function addAuthor(author) {
   return true;
 }
 
+function sendToAllClients(msg) {
+  Array.from(wsServer.clients)
+    .filter((client) => client.readyState === WS.OPEN)
+    .forEach((client) => {
+      client.send(JSON.stringify(msg));
+    });
+}
+
 wsServer.on('connection', (ws) => {
-  // console.log(ws);
-  console.log('connection');
   ws.on('message', (msg) => {
     const request = JSON.parse(msg);
 
     if (request.type === 'connection') {
       if (addAuthor(request.author)) {
-        Array.from(wsServer.clients)
-          .filter((client) => client.readyState === WS.OPEN)
-          .forEach((client) => {
-            // console.log(client);
-            client.send(JSON.stringify({
-              ok: true,
-              type: request.type,
-              author: request.author,
-              authors: Array.from(authors),
-              statusMessage: `${request.author} have been connected`,
-              messages,
-            }));
-          });
+        const message = {
+          ok: true,
+          type: request.type,
+          author: request.author,
+          authors: Array.from(authors),
+          statusMessage: `${request.author} have been connected`,
+          messages,
+        };
+
+        sendToAllClients(message);
       } else {
         ws.send(JSON.stringify({
           ok: false,
@@ -57,19 +60,16 @@ wsServer.on('connection', (ws) => {
       const { author } = request;
       if (authors.has(author)) {
         authors.delete(author);
-        Array.from(wsServer.clients)
-          .filter((client) => client.readyState === WS.OPEN)
-          .forEach((client) => {
-            // console.log(client);
-            client.send(JSON.stringify({
-              ok: true,
-              type: request.type,
-              author: request.author,
-              authors: Array.from(authors),
-              statusMessage: `${request.author} have been disconnected`,
-              messages,
-            }));
-          });
+        const message = {
+          ok: true,
+          type: request.type,
+          author: request.author,
+          authors: Array.from(authors),
+          statusMessage: `${request.author} have been disconnected`,
+          messages,
+        };
+
+        sendToAllClients(message);
       } else {
         ws.send(JSON.stringify({
           ok: false,
@@ -80,7 +80,24 @@ wsServer.on('connection', (ws) => {
         }));
       }
     }
-    console.log(authors);
+
+    if (request.type === 'message') {
+      const rxMessage = {
+        author: request.author,
+        body: request.body,
+        created: new Date(),
+      };
+
+      messages.push(rxMessage);
+
+      const txMessage = {
+        ok: true,
+        type: request.type,
+        ...rxMessage,
+      };
+
+      sendToAllClients(txMessage);
+    }
   });
 });
 
